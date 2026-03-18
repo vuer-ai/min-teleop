@@ -1,0 +1,5 @@
+mujoco
+numpy
+scipy
+# Install vuer from local dev:
+# pip install -e '/Users/marvin/Code/vuer-ai/vuer[webrtc]'
