@@ -19,6 +19,11 @@ class SimRobot(Robot):
         self.data = mujoco.MjData(self.model)
         mujoco.mj_forward(self.model, self.data)
 
+        # Override "front" camera to point at the hand (pos ≈ -0.5, 0.15, 1.1)
+        cam_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_CAMERA, "front")
+        if cam_id >= 0:
+            self.model.cam_pos[cam_id] = [-0.5, -0.45, 1.35]
+
         self.renderer = mujoco.Renderer(self.model, width=width, height=height)
         self.camera = camera
         self.joint_mapper = JointMapper(self.model, self.data)

@@ -55,7 +55,7 @@ def hand_event_to_mocap_targets(hand_data: dict, hand: str = "right") -> dict | 
         Quaternion is scalar-first (w, x, y, z) as MuJoCo expects.
     """
     poses = hand_data.get(hand)
-    if poses is None:
+    if poses is None or len(poses) < 25 * 16:
         return None
 
     targets = {}
