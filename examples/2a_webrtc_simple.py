@@ -32,36 +32,22 @@ log = logging.getLogger("webrtc-simple")
 
 _latest_targets: dict | None = None
 
-app = Vuer(
-    host="0.0.0.0", port=8012, free_port=True,
-    cert="/Users/marvin/cert.pem", key="/Users/marvin/key.pem",
-)
-stream = app.create_webrtc_stream("sim")
-robot = SimRobot(width=640, height=480, camera="front")
-
 SIM_HZ = 60
 RENDER_HZ = 24
 
+robot = SimRobot(width=640, height=480, camera="front")
 
-@app.add_handler("HAND_MOVE")
-async def on_hand_move(event, _session):
-    global _latest_targets
-    targets = hand_event_to_mocap_targets(event.value, hand="right")
-    if targets is not None:
-        _latest_targets = targets
+app = Vuer(
+    host="0.0.0.0", port=8012, free_port=True,
+    cert=Path("~/cert.pem").expanduser(),
+    key=Path("~/key.pem").expanduser(),
+)
+stream = app.create_webrtc_stream("sim")
 
 
-@app.spawn(start=True)
-async def main(session):
-    session.upsert @ [
-        Hands(stream=True, key="hands"),
-        WebRTCVideoPlane(
-            src=stream.endpoint, key="sim-video",
-            distanceToCamera=3, height=3, aspect=4 / 3,
-        ),
-    ]
-
-    log.info(f"sim loop: sim={SIM_HZ}Hz, render={RENDER_HZ}Hz")
+async def sim_loop():
+    """Run simulation and push frames independently of WebSocket sessions."""
+    log.info(f"sim loop started: sim={SIM_HZ}Hz, render={RENDER_HZ}Hz")
 
     frame_count = 0
     t_log = time.monotonic()
@@ -110,3 +96,31 @@ async def main(session):
         # Yield to event loop
         sleep_time = max(0.005, last_render + render_dt - time.monotonic())
         await asyncio.sleep(sleep_time)
+
+
+# Start sim loop when the server starts (event loop is ready), before any client connects.
+async def _on_startup(_app):
+    asyncio.ensure_future(sim_loop())
+
+app.app.on_startup.append(_on_startup)
+
+
+@app.add_handler("HAND_MOVE")
+async def on_hand_move(event, _session):
+    global _latest_targets
+    targets = hand_event_to_mocap_targets(event.value, hand="right")
+    if targets is not None:
+        _latest_targets = targets
+
+
+@app.spawn(start=True)
+async def main(session):
+    session.upsert @ [
+        Hands(stream=True, key="hands"),
+        WebRTCVideoPlane(
+            src=stream.endpoint, key="sim-video",
+            iceServer=None,
+            distanceToCamera=3, height=3, aspect=4 / 3,
+        ),
+    ]
+    await asyncio.sleep(float("inf"))

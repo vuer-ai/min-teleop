@@ -40,12 +40,21 @@ VR 头显 / 浏览器                      Python
 Python 端用 `mujoco.viewer.launch_passive()` 在桌面弹出本地窗口。
 
 ```python
-with mujoco.viewer.launch_passive(robot.model, robot.data) as viewer:
+viewer = mujoco.viewer.launch_passive(robot.model, robot.data)
+
+@app.spawn(start=True)
+async def main(session):
     while viewer.is_running():
         robot.step(targets or {})
         viewer.sync()           # 异步 GPU 提交，~1-2ms
         await asyncio.sleep(0.001)
 ```
+
+> **macOS 注意**：`launch_passive()` 要求使用 `mjpython` 启动脚本（macOS GUI 必须在主线程）：
+> ```bash
+> python examples/1_local_viewer.py          # Linux
+> mjpython examples/1_local_viewer.py        # macOS
+> ```
 
 ### 优缺点
 
@@ -128,7 +137,7 @@ event loop 时间线:
   │                   提供场景组件 (Hands, WebRTCVideoPlane)
   │                   event loop: 100% 空闲
   │
-  └── WebRTC ←──── Process 2 (aiohttp, :8013)
+  └── WebRTC ←──── Process 2 (Vuer, :8013)
                      接收 targets (ZMQ), mj_step, render
                      直接提供 H264 视频流
                      可以随意阻塞，没有其他 I/O 任务
@@ -136,18 +145,27 @@ event loop 时间线:
 Process 1 ──ZMQ (mocap targets)──→ Process 2
 ```
 
+进程间通讯通过 `transport.py` 封装的 ZMQ PUSH/PULL 完成，两端各只需一行调用：
+
+```python
+# client 端
+send = create_sender("tcp://sim_host:5555")
+send(targets)
+
+# server 端
+recv = create_receiver("tcp://127.0.0.1:5555")
+targets = await recv()
+```
+
 ```bash
 # 终端 1: 仿真服务器（可以在任意机器上运行）
 python examples/2b_sim_server.py
 
-# 终端 2: Vuer 前端
+# 终端 2: Vuer 前端（自动检测局域网 IP，也可通过 SIM_HOST 环境变量指定）
 python examples/2b_vuer_client.py
-
-# 仿真服务器在远程机器时:
-python examples/2b_vuer_client.py --sim-host 192.168.1.100
 ```
 
-Process 1 的 `WebRTCVideoPlane(src="https://sim_host:8013/offer")` 直接指向 Process 2。浏览器和 Process 2 之间建立 WebRTC peer connection，视频帧不经过 Process 1。
+Process 1 的 `WebRTCVideoPlane(src="https://sim_host:8013/webrtc/offer/sim")` 直接指向 Process 2。浏览器和 Process 2 之间建立 WebRTC peer connection，视频帧不经过 Process 1。
 
 ### 方案二总结
 
@@ -277,9 +295,10 @@ event loop 空闲     event loop 阻塞  event loop 空闲   event loop 空闲
 
 ```
 min-teleop/
-├── ARCHITECTURE.md                  # 本文档
+├── README.md                        # 本文档
 ├── requirements.txt
 ├── robot.py                         # Robot ABC 接口
+├── transport.py                     # ZMQ 进程间通讯封装
 ├── robots/
 │   └── dexhand/                     # DexHand 机器人实现
 │       ├── sim.py                   #   SimRobot (MuJoCo 仿真)
