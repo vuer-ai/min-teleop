@@ -30,7 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from vuer import Vuer
-from vuer.schemas import DefaultScene, Hands, SceneBackground
+from vuer.schemas import DefaultScene, Hands, SceneBackground, ContribLoader
 from vuer.schemas import MuJoCo as MuJoCoScene
 
 from robots.dexhand import SimRobot, hand_event_to_mocap_targets
@@ -38,11 +38,13 @@ from robots.dexhand import SimRobot, hand_event_to_mocap_targets
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 log = logging.getLogger("browser-scene")
 
-# Serve model/asset files so the browser can fetch them
+SCENE_DIR = Path(__file__).resolve().parent.parent.parent / "robots" / "dexhand" / "scene"
+
+# Serve the self-contained scene directory (MJCF + meshes + table)
 app = Vuer(
     host="0.0.0.0", port=8012, free_port=True,
-    cert="/Users/marvin/cert.pem", key="/Users/marvin/key.pem",
-    static_root="/Users/marvin/Code/vuer-ai/yanbing-hand-example",
+    cert=str(Path.home() / "cert.pem"), key=str(Path.home() / "key.pem"),
+    static_root=str(SCENE_DIR),
 )
 
 # Python-side physics (same as all other approaches)
@@ -51,7 +53,15 @@ robot = SimRobot(width=1, height=1, camera="front")
 _latest_targets: dict | None = None
 _is_mujoco_loaded = False
 
-MJCF_URL = "https://localhost:8012/static/models/dexhand_teleop.mjcf.xml"
+ASSET_PREFIX = "https://localhost:8012/workspace/"
+MJCF_URL = ASSET_PREFIX + "juggle_cube_dex_hands.mjcf.xml"
+
+# List all asset URLs (meshes + table models) — same pattern as mocap_control.py
+ASSET_LIST = [
+    ASSET_PREFIX + str(p.relative_to(SCENE_DIR))
+    for p in SCENE_DIR.rglob("*")
+    if p.is_file() and p.suffix.lower() in {".stl", ".obj", ".mtl"}
+]
 
 
 @app.add_handler("ON_MUJOCO_LOAD")
@@ -73,16 +83,23 @@ async def on_hand_move(event, _session):
 async def main(session):
     # Load full MJCF scene in the browser (robot + environment + objects)
     session.set @ DefaultScene(
+        ContribLoader(
+            key="contrib-loader-mujoco",
+            library="@vuer-ai/mujoco-ts",
+            version="0.0.79",
+            main="dist/index.umd.js",
+            dependencies=["VUER", "LEVA", "FIBER"],
+        ),
         Hands(stream=True, key="hands"),
         MuJoCoScene(
             key="dexhand-sim",
             src=MJCF_URL,
+            assets=ASSET_LIST,
+            workDir="/",     # Avoid double /workspace prefix
             pause=True,      # Don't run physics in browser
             useLights=True,
             useMocap=True,
         ),
-        SceneBackground(),
-        up=[0, 0, 1],
     )
 
     log.info("waiting for browser to load MuJoCo WASM...")

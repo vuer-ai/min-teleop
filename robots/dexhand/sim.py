@@ -8,7 +8,7 @@ import numpy as np
 from robot import Robot
 from .joint_map import JointMapper
 
-_MODEL_PATH = Path(__file__).parent / "models" / "juggle_cube_dex_hands.mjcf.xml"
+_MODEL_PATH = Path(__file__).parent / "scene" / "juggle_cube_dex_hands.mjcf.xml"
 
 
 class SimRobot(Robot):
