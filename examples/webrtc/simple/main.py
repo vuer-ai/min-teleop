@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Approach 2a: Single-Process WebRTC Video Feedback
+"""WebRTC Simple: Single-Process WebRTC Video Feedback
 
 Renders the simulation with MuJoCo's offscreen Renderer and streams the
 frames to the VR headset via WebRTC. Everything runs in one process.
@@ -7,10 +7,11 @@ frames to the VR headset via WebRTC. Everything runs in one process.
 Limitation: Renderer.render() is a synchronous OpenGL call (~25ms) that
 blocks the asyncio event loop. We mitigate by capping render FPS and
 yielding between frames, but the event loop is still starved during each
-render call. For heavy simulations, use the dual-process approach (2b).
+render call. For heavy simulations, use the dual-process approach
+(examples/webrtc/dual_process/).
 
 Usage:
-    python examples/2a_webrtc_simple.py
+    python examples/webrtc/simple/main.py
 """
 
 import asyncio
@@ -19,7 +20,7 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 import numpy as np
 from vuer import Vuer

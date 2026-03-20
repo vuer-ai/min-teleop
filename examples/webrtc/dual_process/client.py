@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Approach 2b — Vuer Frontend Client (Process 1)
+"""WebRTC Dual-Process — Vuer Frontend Client (Process 1)
 
 Lightweight Vuer app that:
 - Receives HAND_MOVE events from the browser
@@ -11,10 +11,10 @@ for WebSocket and scene graph updates.
 
 Usage:
     # Terminal 1: start sim server first
-    python examples/2b_sim_server.py
+    python examples/webrtc/dual_process/server.py
 
     # Terminal 2: start this client
-    python examples/2b_vuer_client.py
+    python examples/webrtc/dual_process/client.py
 """
 
 import logging
@@ -22,7 +22,7 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 from vuer import Vuer
 from vuer.schemas import Hands, WebRTCVideoPlane

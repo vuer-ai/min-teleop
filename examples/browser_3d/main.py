@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Approach 3: Browser-Side 3D Rendering
+"""Browser 3D: Browser-Side 3D Rendering
 
 Instead of streaming video, the browser renders the full 3D scene locally.
 Python runs the physics / reads real hardware, then sends qpos (joint
@@ -7,7 +7,7 @@ positions) back to the browser via WebSocket. The browser updates the
 scene at native refresh rate (72/90/120Hz).
 
 Data sent per frame: ~hundreds of bytes (qpos array)
-vs. Approach 2:     ~tens of KB (compressed video frame)
+vs. WebRTC approach: ~tens of KB (compressed video frame)
 
 Vuer's MuJoCo component loads the full MJCF scene (robot + environment +
 objects) in the browser using MuJoCo WASM. The Python side sets qpos
@@ -18,7 +18,7 @@ For other simulators (Isaac Sim) or real hardware, you need a mapping
 from their joint/object state → the MJCF model's qpos indices.
 
 Usage:
-    python examples/3_browser_scene.py
+    python examples/browser_3d/main.py
 """
 
 import asyncio
@@ -27,7 +27,7 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from vuer import Vuer
 from vuer.schemas import DefaultScene, Hands, SceneBackground

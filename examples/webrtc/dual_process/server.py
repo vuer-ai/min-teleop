@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Approach 2b — Simulation Server (Process 2)
+"""WebRTC Dual-Process — Simulation Server (Process 2)
 
 Runs MuJoCo simulation + offscreen rendering and serves video via WebRTC.
 Receives mocap targets from the Vuer client process via ZMQ.
 
 Usage:
     # Terminal 1:
-    python examples/2b_sim_server.py
+    python examples/webrtc/dual_process/server.py
 
     # Terminal 2:
-    python examples/2b_vuer_client.py
+    python examples/webrtc/dual_process/client.py
 """
 
 import asyncio
@@ -18,7 +18,7 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 
 import numpy as np
 from vuer import Vuer
@@ -33,8 +33,8 @@ SIM_HZ = 60
 RENDER_HZ = 30
 
 robot = SimRobot(width=640, height=480, camera="front")
-recv = create_receiver("tcp://127.0.0.1:5555")
-log.info("targets: listening on tcp://127.0.0.1:5555")
+recv = create_receiver("tcp://0.0.0.0:5555")
+log.info("targets: listening on tcp://0.0.0.0:5555")
 
 app = Vuer(
     host="0.0.0.0", port=8013, free_port=True,

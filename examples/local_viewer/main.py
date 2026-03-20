@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Approach 1: VR Hand Tracking + Local MuJoCo Viewer (No WebRTC)
+"""Local Viewer: VR Hand Tracking + Local MuJoCo Viewer (No WebRTC)
 
 The simplest approach — no video streaming.
 - Browser sends hand tracking data via WebSocket
@@ -10,8 +10,8 @@ viewer.sync() submits scene data to the GPU pipeline and returns immediately
 (~1-2ms), so the asyncio event loop stays responsive.
 
 Usage:
-    python examples/1_local_viewer.py          # Linux
-    mjpython examples/1_local_viewer.py        # macOS (requires mjpython)
+    python examples/local_viewer/main.py          # Linux
+    mjpython examples/local_viewer/main.py        # macOS (requires mjpython)
 """
 
 import asyncio
@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 
 # Allow imports from project root
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import mujoco.viewer
 from vuer import Vuer
