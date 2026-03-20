@@ -8,7 +8,7 @@ import numpy as np
 from robot import Robot
 from .joint_map import JointMapper
 
-_MODEL_PATH = Path(__file__).parent / "models" / "dexhand_teleop.mjcf.xml"
+_MODEL_PATH = Path(__file__).parent / "models" / "juggle_cube_dex_hands.mjcf.xml"
 
 
 class SimRobot(Robot):
@@ -19,10 +19,13 @@ class SimRobot(Robot):
         self.data = mujoco.MjData(self.model)
         mujoco.mj_forward(self.model, self.data)
 
-        # Override "front" camera to point at the hand (pos ≈ -0.5, 0.15, 1.1)
+        # Override "front" camera to see both hand (x≈-0.5) and table/boxes (x≈0)
         cam_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_CAMERA, "front")
         if cam_id >= 0:
-            self.model.cam_pos[cam_id] = [-0.5, -0.45, 1.35]
+            self.model.cam_pos[cam_id] = [-0.25, -0.6, 1.3]
+            # Look from y=-0.6 toward +y, slightly down (w,x,y,z)
+            self.model.cam_quat[cam_id] = [0.92, 0.39, 0.0, 0.0]
+            self.model.cam_fovy[cam_id] = 70
 
         self.renderer = mujoco.Renderer(self.model, width=width, height=height)
         self.camera = camera
