@@ -1,0 +1,12 @@
+name: min-teleop
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+    - "vuer[webrtc]>=0.1.6"
+    - mujoco
+    - numpy
+    - scipy
+    - pyzmq

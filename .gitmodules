@@ -1,0 +1,4 @@
+[submodule "third_party/dex-retargeting"]
+	path = third_party/dex-retargeting
+	url = https://github.com/silencht/dex-retargeting.git
+	branch = unitree
